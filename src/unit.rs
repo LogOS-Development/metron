@@ -13,42 +13,6 @@ use typenum::consts::*;
 use typenum::{Diff, Sum, Z0};
 
 // ===========================================================================
-// Halvable — type-level "half" for even signed exponents
-// ===========================================================================
-
-/// Halves a type-level signed integer exponent.
-///
-/// Only implemented for **even** exponents (`Z0`, `P2`, `N2`, `P4`, `N4`, …).
-/// Odd exponents (`P1`, `N1`, `P3`, …) have no impl, so attempting `sqrt` on
-/// a quantity with an odd exponent in any dimension is a compile-time error
-/// — exactly the desired behavior, since `sqrt(m)` would require `m^{1/2}`,
-/// which has no physical SI unit.
-pub trait Halvable {
-    /// The exponent divided by two.
-    type Output;
-}
-
-macro_rules! impl_halvable {
-    ($($p:ident => $ph:ident, $n:ident => $nh:ident),* $(,)?) => {
-        $(
-            impl Halvable for $p { type Output = $ph; }
-            impl Halvable for $n { type Output = $nh; }
-        )*
-    };
-}
-
-// Z0 is even (0 / 2 = 0).
-impl Halvable for Z0 {
-    type Output = Z0;
-}
-
-impl_halvable! {
-    P2 => P1, N2 => N1,
-    P4 => P2, N4 => N2,
-    P6 => P3, N6 => N3,
-}
-
-// ===========================================================================
 // UnitPow — raise a unit tuple to an integer power at the type level
 // ===========================================================================
 
@@ -190,34 +154,5 @@ where
 }
 
 // ===========================================================================
-// Sqrt — type-level square root of a unit tuple
+// Sqrt trait removed — not needed for physics. Use pow! and division instead.
 // ===========================================================================
-
-/// Trait for taking the type-level square root of a unit tag.
-///
-/// Implemented on `Unit<(...)>` tuples where every exponent is [`Halvable`].
-pub trait Sqrt {
-    /// The unit whose exponents are half of `Self`'s exponents.
-    type Output;
-}
-
-impl<M, Kg, S, A, K, Mol, Cd> Sqrt for Unit<(M, Kg, S, A, K, Mol, Cd)>
-where
-    M: Halvable,
-    Kg: Halvable,
-    S: Halvable,
-    A: Halvable,
-    K: Halvable,
-    Mol: Halvable,
-    Cd: Halvable,
-{
-    type Output = Unit<(
-        <M as Halvable>::Output,
-        <Kg as Halvable>::Output,
-        <S as Halvable>::Output,
-        <A as Halvable>::Output,
-        <K as Halvable>::Output,
-        <Mol as Halvable>::Output,
-        <Cd as Halvable>::Output,
-    )>;
-}

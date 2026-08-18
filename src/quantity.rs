@@ -8,7 +8,7 @@ use num_traits::{Float, NumAssign, Zero};
 
 use super::dim;
 use super::prefix::SiPrefix;
-use super::unit::{PowMap, Sqrt, UnitPow};
+use super::unit::{PowMap, UnitPow};
 use super::unit_name::UnitName;
 
 #[cfg(feature = "serde")]
@@ -94,22 +94,6 @@ impl<T, U> Quantity<T, U> {
             value: f(self.value),
             _u: PhantomData,
         }
-    }
-
-    /// Square root of a scalar quantity.
-    ///
-    /// Produces a `Quantity<T, SqrtU>` where `SqrtU` is the type-level
-    /// square root of `U`.  Only callable when every exponent in `U` is
-    /// even — `sqrt(m²) = m`, `sqrt(m²/s²) = m/s`.
-    /// Odd exponents (`sqrt(m)`) are rejected at compile time.
-    #[inline]
-    #[must_use]
-    pub fn sqrt(self) -> Quantity<T, <U as Sqrt>::Output>
-    where
-        T: nalgebra::ComplexField,
-        U: Sqrt,
-    {
-        Quantity::new(self.value.sqrt())
     }
 
     /// Raise a quantity to an integer power.
@@ -260,5 +244,21 @@ where
 impl<T: fmt::Display, U: UnitName> fmt::Display for Quantity<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.value, U::NAME)
+    }
+}
+
+// --- Dimensionless auto-cast: unitless quantities convert to f64 ---
+
+impl From<Quantity<f64, dim::Dimensionless>> for f64 {
+    #[inline]
+    fn from(q: Quantity<f64, dim::Dimensionless>) -> f64 {
+        q.value
+    }
+}
+
+impl From<&Quantity<f64, dim::Dimensionless>> for f64 {
+    #[inline]
+    fn from(q: &Quantity<f64, dim::Dimensionless>) -> f64 {
+        q.value
     }
 }

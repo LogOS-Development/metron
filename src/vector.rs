@@ -147,6 +147,13 @@ impl<T: NumAssign + Clone + nalgebra::Scalar + nalgebra::ComplexField, U> Vector
     {
         VectorQuantity::new(self.vector.cross(&other.vector))
     }
+
+    /// Construct from `[x, y, z]` components.
+    #[inline]
+    #[must_use]
+    pub fn from_xyz(x: T, y: T, z: T) -> Self {
+        Self::new(nalgebra::Vector3::new(x, y, z))
+    }
 }
 
 impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, U> Add for VectorQuantity<T, N, U> {

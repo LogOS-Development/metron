@@ -451,21 +451,28 @@ mod tests {
         let _kpa = crate::Kilopascals::new(101.3);
     }
 
-    // --- Sqrt tests ---
+    // --- Dimensionless auto-cast tests ---
 
     #[test]
-    fn sqrt_area_assigns_to_meters() {
-        let area = Area::new(100.0);
-        let length: Meters = area.sqrt();
-        assert_relative_eq!(length.value, 10.0);
+    fn dimensionless_into_f64() {
+        let ratio: Dimensionless = Dimensionless::new(0.5);
+        let val: f64 = ratio.into();
+        assert_relative_eq!(val, 0.5);
     }
 
     #[test]
-    fn sqrt_velocity_squared_is_velocity() {
-        let vel = Velocity::new(5.0);
-        let vel_sq = vel * vel;
-        let r: Velocity = vel_sq.sqrt();
-        assert_relative_eq!(r.value, 5.0);
+    fn dimensionless_ref_into_f64() {
+        let ratio: Dimensionless = Dimensionless::new(2.71);
+        let val: f64 = (&ratio).into();
+        assert_relative_eq!(val, 2.71);
+    }
+
+    #[test]
+    fn dimensionless_from_arithmetic() {
+        // m / m = dimensionless
+        let ratio: Dimensionless = Meters::new(10.0) / Meters::new(2.0);
+        let val: f64 = ratio.into();
+        assert_relative_eq!(val, 5.0);
     }
 
     // --- pow! macro tests ---
