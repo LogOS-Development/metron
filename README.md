@@ -2,8 +2,7 @@
 
 *μέτρον — measure, proportion*
 
-Compile-time SI units for Rust. Zero-cost dimensional analysis with `pow!` macro syntax. Stable Rust, no nightly required.
-
+Compile-time SI units for Rust. Zero-cost dimensional analysis.
 ## Quick start
 
 ```toml
