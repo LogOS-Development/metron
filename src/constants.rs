@@ -10,10 +10,10 @@ use crate::quantity::Quantity;
 pub const C: Velocity = Velocity::new(299_792_458.0);
 
 /// Reduced Planck constant ℏ (J·s).
-pub const HBAR: Quantity<f64, crate::dim::Energy> = Quantity::new(1.054571817e-34);
+pub const HBAR: Action = Action::new(1.054571817e-34);
 
 /// Planck constant h = 2πℏ (J·s).
-pub const H: Quantity<f64, crate::dim::Energy> = Quantity::new(6.62607015e-34);
+pub const H: Action = Action::new(6.62607015e-34);
 
 /// Boltzmann constant k_B (J/K).
 pub const K_B: Quantity<f64, crate::dim::Energy> = Quantity::new(1.380649e-23);

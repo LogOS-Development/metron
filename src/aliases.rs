@@ -42,6 +42,7 @@ pub type MomentOfInertia<T = f64> = Quantity<T, dim::MomentOfInertia>;
 pub type SpecificEnergy<T = f64> = Quantity<T, dim::SpecificEnergy>;
 pub type SpringConstant<T = f64> = Quantity<T, dim::SpringConstant>;
 pub type DampingCoefficient<T = f64> = Quantity<T, dim::DampingCoefficient>;
+pub type Action<T = f64> = Quantity<T, dim::Action>;
 pub type Wavenumber<T = f64> = Quantity<T, dim::Wavenumber>;
 pub type ProbabilityDensity<T = f64> = Quantity<T, dim::ProbabilityDensity>;
 pub type MassFlowRate<T = f64> = Quantity<T, dim::MassFlowRate>;

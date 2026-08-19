@@ -109,3 +109,6 @@ impl UnitName for dim::SpringConstant {
 }
 // DampingCoefficient = MassFlowRate (same dimensions: kg/s = N·s/m)
 // — already has UnitName impl via MassFlowRate
+impl UnitName for dim::Action {
+    const NAME: &'static str = "J·s";
+}

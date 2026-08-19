@@ -40,11 +40,11 @@ fn main() {
     println!("  Mass:           {:.0}", mass);
     println!(
         "  Natural freq:   {:.4} Hz",
-        omega0.map(|w| w / f64::from(TAU))
+        omega0 / Frequency::new(f64::from(TAU))
     );
     println!("  Quality factor: Q = {:.1}", q_factor);
-    println!("  Spring constant k:  {:.2} N/m", spring_k.value);
-    println!("  Damping coeff  c:   {:.2} N·s/m", damping_c.value);
+    println!("  Spring constant k:  {:.2}", spring_k);
+    println!("  Damping coeff  c:   {:.2}", damping_c);
     println!(
         "  Damping ratio ζ:    {:.4} ({})",
         zeta,
@@ -57,11 +57,11 @@ fn main() {
         }
     );
     println!(
-        "  Damped freq ω_d:   {:.4} rad/s ({:.4} Hz)",
-        omega_d.value,
-        omega_d.value / f64::from(TAU)
+        "  Damped freq ω_d:   {:.4} ({:.4} Hz)",
+        omega_d,
+        omega_d / Frequency::new(f64::from(TAU))
     );
-    println!("  Initial energy: {:.4}", e0.value);
+    println!("  Initial energy: {:.4}", e0);
     println!();
 
     let dt: Seconds = Seconds::new(0.001);
@@ -86,7 +86,7 @@ fn main() {
             let e_ratio: f64 = (e / e0).into();
             println!(
                 "  {:>8.2}  {:>10.6}  {:>10.6}  {:>10.4}  {:>10.6}",
-                t.value, x.value, v.value, e.value, e_ratio
+                t, x, v, e, e_ratio
             );
         }
 
@@ -108,9 +108,9 @@ fn main() {
     let exp_arg: f64 = f64::from(-omega0 * zeta * t_total).exp();
     let cos_arg: f64 = f64::from(omega_d * t_total);
     let x_analytic: Meters = x0 * exp_arg * cos_arg.cos();
-    let x_error: Meters = (x - x_analytic).map(|diff| diff.abs());
+    let x_error: Meters = (x - x_analytic).abs();
 
-    println!("Comparison at t = {:.1} s:", t_total.value);
+    println!("Comparison at t = {:.1}:", t_total);
     println!("  Numerical  x = {:.6e}", x);
     println!("  Analytic   x = {:.6e}", x_analytic);
     println!(
@@ -124,7 +124,7 @@ fn main() {
     let e_dissipated: Energy = e0 - e_final;
     let pct: f64 = f64::from(e_dissipated / e0) * 100.0;
     println!(
-        "Energy dissipated: {:.4} J ({:.1}% of initial)",
-        e_dissipated.value, pct
+        "Energy dissipated: {:.4} ({:.1}% of initial)",
+        e_dissipated, pct
     );
 }

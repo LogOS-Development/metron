@@ -261,7 +261,7 @@ fn specific_energy(pos: PositionVector, vel: VelocityVector) -> SpecificEnergy {
     let r: Meters = pos.norm();
     let v: Velocity = vel.norm();
     let v_sq: SpecificEnergy = pow!(v, 2);
-    let ke: SpecificEnergy = v_sq.map(|x| x * 0.5);
+    let ke: SpecificEnergy = v_sq.map(|x: f64| x * 0.5);
     let pe: SpecificEnergy = gm / r;
     ke - pe
 }
@@ -299,7 +299,7 @@ fn main() {
 
     // Propagate one full orbit
     let dt_init: Seconds = Seconds::new(10.0); // start with 10s steps
-    let final_state = propagate(initial_state, period_secs, dt_init, 1e-10);
+    let final_state: OrbitState = propagate(initial_state, period_secs, dt_init, 1e-10);
 
     // Check energy conservation
     let e_initial: SpecificEnergy = specific_energy(initial_state.pos, initial_state.vel);
