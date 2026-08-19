@@ -2,7 +2,7 @@
 
 use core::fmt;
 use core::marker::PhantomData;
-use core::ops::{Add, Div, Mul, Neg, Sub};
+use core::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use nalgebra::SVector;
 use num_traits::{NumAssign, Zero};
@@ -170,6 +170,14 @@ impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, U> Sub for VectorQ
         Self::new(self.vector - r.vector)
     }
 }
+impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, U> AddAssign
+    for VectorQuantity<T, N, U>
+{
+    #[inline]
+    fn add_assign(&mut self, r: Self) {
+        self.vector += r.vector;
+    }
+}
 impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, U> Neg for VectorQuantity<T, N, U>
 where
     SVector<T, N>: Neg<Output = SVector<T, N>>,
@@ -199,8 +207,37 @@ impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, U> Div<T>
     }
 }
 
-impl<T: NumAssign + Clone + nalgebra::Scalar, const N: usize, UA: Mul<UB>, UB>
-    Mul<VectorQuantity<T, N, UB>> for Quantity<T, UA>
+// --- VectorQuantity * Quantity (scalar) → VectorQuantity with product unit ---
+// e.g. VelocityVector * Seconds → PositionVector
+//      AccelerationVector * Seconds → VelocityVector
+
+impl<T, const N: usize, UA: Mul<UB>, UB> Mul<Quantity<T, UB>> for VectorQuantity<T, N, UA>
+where
+    T: NumAssign + Clone + nalgebra::Scalar,
+{
+    type Output = VectorQuantity<T, N, <UA as Mul<UB>>::Output>;
+    #[inline]
+    fn mul(self, r: Quantity<T, UB>) -> Self::Output {
+        VectorQuantity::new(self.vector * r.value)
+    }
+}
+
+impl<T, const N: usize, UA: Div<UB>, UB> Div<Quantity<T, UB>> for VectorQuantity<T, N, UA>
+where
+    T: NumAssign + Clone + nalgebra::Scalar,
+{
+    type Output = VectorQuantity<T, N, <UA as Div<UB>>::Output>;
+    #[inline]
+    fn div(self, r: Quantity<T, UB>) -> Self::Output {
+        VectorQuantity::new(self.vector / r.value)
+    }
+}
+
+// --- Quantity * VectorQuantity (commutative) ---
+
+impl<T, const N: usize, UA: Mul<UB>, UB> Mul<VectorQuantity<T, N, UB>> for Quantity<T, UA>
+where
+    T: NumAssign + Clone + nalgebra::Scalar,
 {
     type Output = VectorQuantity<T, N, <UA as Mul<UB>>::Output>;
     #[inline]

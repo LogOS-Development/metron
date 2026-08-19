@@ -7,16 +7,19 @@
 //! Run: cargo run --example orbital_propagator
 
 use metron::constants::{GM_EARTH, R_EARTH_EQ, TAU};
+use metron::dim;
 use metron::pow;
-use metron::{AccelerationVector, GravitationalParameter, Meters, Quantity, Seconds, Velocity};
-use nalgebra::Vector3;
+use metron::{
+    Acceleration, AccelerationVector, GravitationalParameter, Meters, PositionVector, Quantity,
+    Seconds, VelocityVector,
+};
+use std::ops::Mul;
 
-/// Physical state: position and velocity vectors (raw f64 for nalgebra ops).
-/// Units are enforced at construction and when computing derived quantities.
+/// Physical state: position and velocity as typed vectors.
 #[derive(Clone, Copy, Debug)]
 struct OrbitState {
-    pos: Vector3<f64>, // meters
-    vel: Vector3<f64>, // m/s
+    pos: PositionVector,
+    vel: VelocityVector,
 }
 
 /// Dormand-Prince 5(4) coefficients (DORMAND-PRINCE 1980).
@@ -76,104 +79,105 @@ mod rkdp54 {
 ///
 /// a = GM / r²  (point mass)
 ///
-/// All quantities stay typed — no .value until the integrator
-/// needs raw f64 for nalgebra vector math.
-fn gravity_accel_magnitude(r: Meters, gm: GravitationalParameter) -> metron::Acceleration {
+/// Fully typed: gm / r² → (m³/s²) / m² = m/s² = Acceleration.
+fn gravity_accel_magnitude(r: Meters, gm: GravitationalParameter) -> Acceleration {
     let r_sq = pow!(r, 2);
     gm / r_sq
 }
 
 /// Gravitational acceleration vector.
-fn gravity_accel(pos: Vector3<f64>, gm: GravitationalParameter) -> AccelerationVector {
-    let r_mag = Meters::new(pos.norm());
-    let r_hat = pos / r_mag.value;
+///
+/// Takes typed position, returns typed acceleration.
+/// a = -GM/|r|² * r̂
+fn gravity_accel(pos: PositionVector, gm: GravitationalParameter) -> AccelerationVector {
+    let r_mag = pos.norm();
     let accel = gravity_accel_magnitude(r_mag, gm);
-    AccelerationVector::new(-accel.value * r_hat)
+    let r_hat = pos / r_mag;
+    r_hat * (-accel)
 }
 
 /// Derivative of orbital state: velocity and acceleration.
-fn derivative(state: &OrbitState) -> (Vector3<f64>, Vector3<f64>) {
+fn derivative(state: &OrbitState) -> (VelocityVector, AccelerationVector) {
     let gm = GM_EARTH;
     let acc = gravity_accel(state.pos, gm);
-    (state.vel, acc.vector)
+    (state.vel, acc)
 }
 
 /// One RKDP54 step with adaptive step size control.
 ///
-/// Returns the new state, the error estimate, and whether the step was accepted.
+/// Returns the new state and the error estimate (dimensionless relative).
 fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
-    // Compute 7 stages (k1..k7)
     let (k1_v, k1_a) = derivative(state);
 
+    // k_v * dt → PositionVector, k_a * dt → VelocityVector
     let s2 = OrbitState {
-        pos: state.pos + k1_v * (rkdp54::C[1] * dt.value),
-        vel: state.vel + k1_a * (rkdp54::C[1] * dt.value),
+        pos: state.pos + k1_v * (rkdp54::C[1] * dt),
+        vel: state.vel + k1_a * (rkdp54::C[1] * dt),
     };
     let (k2_v, k2_a) = derivative(&s2);
 
     let s3 = OrbitState {
-        pos: state.pos + k1_v * (rkdp54::A[2][0] * dt.value) + k2_v * (rkdp54::A[2][1] * dt.value),
-        vel: state.vel + k1_a * (rkdp54::A[2][0] * dt.value) + k2_a * (rkdp54::A[2][1] * dt.value),
+        pos: state.pos + k1_v * (rkdp54::A[2][0] * dt) + k2_v * (rkdp54::A[2][1] * dt),
+        vel: state.vel + k1_a * (rkdp54::A[2][0] * dt) + k2_a * (rkdp54::A[2][1] * dt),
     };
     let (k3_v, k3_a) = derivative(&s3);
 
     let s4 = OrbitState {
         pos: state.pos
-            + k1_v * (rkdp54::A[3][0] * dt.value)
-            + k2_v * (rkdp54::A[3][1] * dt.value)
-            + k3_v * (rkdp54::A[3][2] * dt.value),
+            + k1_v * (rkdp54::A[3][0] * dt)
+            + k2_v * (rkdp54::A[3][1] * dt)
+            + k3_v * (rkdp54::A[3][2] * dt),
         vel: state.vel
-            + k1_a * (rkdp54::A[3][0] * dt.value)
-            + k2_a * (rkdp54::A[3][1] * dt.value)
-            + k3_a * (rkdp54::A[3][2] * dt.value),
+            + k1_a * (rkdp54::A[3][0] * dt)
+            + k2_a * (rkdp54::A[3][1] * dt)
+            + k3_a * (rkdp54::A[3][2] * dt),
     };
     let (k4_v, k4_a) = derivative(&s4);
 
     let s5 = OrbitState {
         pos: state.pos
-            + k1_v * (rkdp54::A[4][0] * dt.value)
-            + k2_v * (rkdp54::A[4][1] * dt.value)
-            + k3_v * (rkdp54::A[4][2] * dt.value)
-            + k4_v * (rkdp54::A[4][3] * dt.value),
+            + k1_v * (rkdp54::A[4][0] * dt)
+            + k2_v * (rkdp54::A[4][1] * dt)
+            + k3_v * (rkdp54::A[4][2] * dt)
+            + k4_v * (rkdp54::A[4][3] * dt),
         vel: state.vel
-            + k1_a * (rkdp54::A[4][0] * dt.value)
-            + k2_a * (rkdp54::A[4][1] * dt.value)
-            + k3_a * (rkdp54::A[4][2] * dt.value)
-            + k4_a * (rkdp54::A[4][3] * dt.value),
+            + k1_a * (rkdp54::A[4][0] * dt)
+            + k2_a * (rkdp54::A[4][1] * dt)
+            + k3_a * (rkdp54::A[4][2] * dt)
+            + k4_a * (rkdp54::A[4][3] * dt),
     };
     let (k5_v, k5_a) = derivative(&s5);
 
     let s6 = OrbitState {
         pos: state.pos
-            + k1_v * (rkdp54::A[5][0] * dt.value)
-            + k2_v * (rkdp54::A[5][1] * dt.value)
-            + k3_v * (rkdp54::A[5][2] * dt.value)
-            + k4_v * (rkdp54::A[5][3] * dt.value)
-            + k5_v * (rkdp54::A[5][4] * dt.value),
+            + k1_v * (rkdp54::A[5][0] * dt)
+            + k2_v * (rkdp54::A[5][1] * dt)
+            + k3_v * (rkdp54::A[5][2] * dt)
+            + k4_v * (rkdp54::A[5][3] * dt)
+            + k5_v * (rkdp54::A[5][4] * dt),
         vel: state.vel
-            + k1_a * (rkdp54::A[5][0] * dt.value)
-            + k2_a * (rkdp54::A[5][1] * dt.value)
-            + k3_a * (rkdp54::A[5][2] * dt.value)
-            + k4_a * (rkdp54::A[5][3] * dt.value)
-            + k5_a * (rkdp54::A[5][4] * dt.value),
+            + k1_a * (rkdp54::A[5][0] * dt)
+            + k2_a * (rkdp54::A[5][1] * dt)
+            + k3_a * (rkdp54::A[5][2] * dt)
+            + k4_a * (rkdp54::A[5][3] * dt)
+            + k5_a * (rkdp54::A[5][4] * dt),
     };
     let (k6_v, k6_a) = derivative(&s6);
 
     // 5th-order solution
-    let dt_val = dt.value;
     let new_pos = state.pos
-        + k1_v * (rkdp54::B5[0] * dt_val)
-        + k3_v * (rkdp54::B5[2] * dt_val)
-        + k4_v * (rkdp54::B5[3] * dt_val)
-        + k5_v * (rkdp54::B5[4] * dt_val)
-        + k6_v * (rkdp54::B5[5] * dt_val);
+        + k1_v * (rkdp54::B5[0] * dt)
+        + k3_v * (rkdp54::B5[2] * dt)
+        + k4_v * (rkdp54::B5[3] * dt)
+        + k5_v * (rkdp54::B5[4] * dt)
+        + k6_v * (rkdp54::B5[5] * dt);
 
     let new_vel = state.vel
-        + k1_a * (rkdp54::B5[0] * dt_val)
-        + k3_a * (rkdp54::B5[2] * dt_val)
-        + k4_a * (rkdp54::B5[3] * dt_val)
-        + k5_a * (rkdp54::B5[4] * dt_val)
-        + k6_a * (rkdp54::B5[5] * dt_val);
+        + k1_a * (rkdp54::B5[0] * dt)
+        + k3_a * (rkdp54::B5[2] * dt)
+        + k4_a * (rkdp54::B5[3] * dt)
+        + k5_a * (rkdp54::B5[4] * dt)
+        + k6_a * (rkdp54::B5[5] * dt);
 
     // 7th stage (FSAL: reuses k1 of next step, uses new state)
     let s7 = OrbitState {
@@ -183,23 +187,25 @@ fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
     let (k7_v, k7_a) = derivative(&s7);
 
     // Error estimate = |5th-order - 4th-order|
-    let err_pos = (k1_v * (rkdp54::B5[0] - rkdp54::B4[0])
-        + k3_v * (rkdp54::B5[2] - rkdp54::B4[2])
-        + k4_v * (rkdp54::B5[3] - rkdp54::B4[3])
-        + k5_v * (rkdp54::B5[4] - rkdp54::B4[4])
-        + k6_v * (rkdp54::B5[5] - rkdp54::B4[5])
-        + k7_v * (rkdp54::B5[6] - rkdp54::B4[6]))
-        * dt_val;
+    // (b5-b4) is dimensionless, * dt gives position/velocity units
+    let err_pos = k1_v * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
+        + k3_v * ((rkdp54::B5[2] - rkdp54::B4[2]) * dt)
+        + k4_v * ((rkdp54::B5[3] - rkdp54::B4[3]) * dt)
+        + k5_v * ((rkdp54::B5[4] - rkdp54::B4[4]) * dt)
+        + k6_v * ((rkdp54::B5[5] - rkdp54::B4[5]) * dt)
+        + k7_v * ((rkdp54::B5[6] - rkdp54::B4[6]) * dt);
 
-    let err_vel = (k1_a * (rkdp54::B5[0] - rkdp54::B4[0])
-        + k3_a * (rkdp54::B5[2] - rkdp54::B4[2])
-        + k4_a * (rkdp54::B5[3] - rkdp54::B4[3])
-        + k5_a * (rkdp54::B5[4] - rkdp54::B4[4])
-        + k6_a * (rkdp54::B5[5] - rkdp54::B4[5])
-        + k7_a * (rkdp54::B5[6] - rkdp54::B4[6]))
-        * dt_val;
+    let err_vel = k1_a * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
+        + k3_a * ((rkdp54::B5[2] - rkdp54::B4[2]) * dt)
+        + k4_a * ((rkdp54::B5[3] - rkdp54::B4[3]) * dt)
+        + k5_a * ((rkdp54::B5[4] - rkdp54::B4[4]) * dt)
+        + k6_a * ((rkdp54::B5[5] - rkdp54::B4[5]) * dt)
+        + k7_a * ((rkdp54::B5[6] - rkdp54::B4[6]) * dt);
 
-    let error = (err_pos.norm().powi(2) + err_vel.norm().powi(2)).sqrt();
+    // RMS error norm (dimensionless relative)
+    let err_pos_mag = err_pos.norm().value;
+    let err_vel_mag = err_vel.norm().value;
+    let error = (err_pos_mag * err_pos_mag + err_vel_mag * err_vel_mag).sqrt();
 
     (
         OrbitState {
@@ -217,20 +223,19 @@ fn propagate(
     mut dt: Seconds,
     tolerance: f64,
 ) -> OrbitState {
-    let mut t = 0.0_f64;
-    let t_end = t_total.value;
+    let mut t = Seconds::new(0.0);
 
-    while t < t_end {
-        if t + dt.value > t_end {
-            dt = Seconds::new(t_end - t);
+    while t < t_total {
+        if t + dt > t_total {
+            dt = t_total - t;
         }
 
         let (new_state, error) = rkdp54_step(&state, dt);
 
-        if error < tolerance || dt.value < 1e-6 {
+        if error < tolerance || dt < Seconds::new(1e-6) {
             // Accept step
             state = new_state;
-            t += dt.value;
+            t += dt;
             // Increase step if error is small
             if error > 0.0 {
                 let factor = (tolerance / error).powf(0.2).clamp(0.2, 5.0);
@@ -249,17 +254,12 @@ fn propagate(
 ///
 /// All arithmetic is compile-time unit checked. v² has units (m/s)² = m²/s²,
 /// GM/r has units m³/s² / m = m²/s² — both are specific energy (J/kg).
-/// No .value needed.
-fn specific_energy(
-    pos: Vector3<f64>,
-    vel: Vector3<f64>,
-) -> Quantity<f64, <metron::dim::Velocity as core::ops::Mul<metron::dim::Velocity>>::Output> {
-    // v² has units (m/s)² = m²/s² — this is specific energy (J/kg).
-    // GM/r has units m³/s² / m = m²/s² — same type, so subtraction works.
-    // No .value needed — fully compile-time checked.
+type SpecificEnergy = Quantity<f64, <dim::Velocity as Mul<dim::Velocity>>::Output>;
+
+fn specific_energy(pos: PositionVector, vel: VelocityVector) -> SpecificEnergy {
     let gm = GM_EARTH;
-    let r = Meters::new(pos.norm());
-    let v = Velocity::new(vel.norm());
+    let r = pos.norm();
+    let v = vel.norm();
     let v_sq = pow!(v, 2);
     let ke = v_sq.map(|x| x * 0.5);
     let pe = gm / r;
@@ -276,14 +276,13 @@ fn main() {
     // v = sqrt(GM/r)  →  sqrt(m²/s²) = m/s
     let v_circ = (gm / r0).sqrt();
 
-    // Position and velocity as raw vectors for the integrator
+    // Position and velocity as typed vectors
     let initial_state = OrbitState {
-        pos: Vector3::new(r0.value, 0.0, 0.0),
-        vel: Vector3::new(0.0, v_circ.value, 0.0),
+        pos: PositionVector::from_xyz(r0.value, 0.0, 0.0),
+        vel: VelocityVector::from_xyz(0.0, v_circ.value, 0.0),
     };
 
     // Orbital period: T = 2π * sqrt(r³/GM)
-    // pow!(r0, 3) has units m³. GM has units m³/s². r³/GM = s².
     let r_cubed = pow!(r0, 3);
     let period_secs = TAU * (r_cubed / gm).sqrt();
 
@@ -302,22 +301,23 @@ fn main() {
     let dt_init = Seconds::new(10.0); // start with 10s steps
     let final_state = propagate(initial_state, period_secs, dt_init, 1e-10);
 
-    // Check energy conservation (should be near-zero drift for adaptive RKDP54)
+    // Check energy conservation
     let e_initial = specific_energy(initial_state.pos, initial_state.vel);
     let e_final = specific_energy(final_state.pos, final_state.vel);
     let energy_drift = (e_final - e_initial).value.abs();
 
     // Check position closure (should return to start after one period)
-    let pos_error = (final_state.pos - initial_state.pos).norm();
+    let pos_delta = final_state.pos - initial_state.pos;
+    let pos_error = pos_delta.norm().value;
 
     println!("After 1 orbit:");
     println!(
         "  Position: ({:.1}, {:.1}, {:.1}) m",
-        final_state.pos.x, final_state.pos.y, final_state.pos.z
+        final_state.pos.vector.x, final_state.pos.vector.y, final_state.pos.vector.z
     );
     println!(
         "  Velocity: ({:.1}, {:.1}, {:.1}) m/s",
-        final_state.vel.x, final_state.vel.y, final_state.vel.z
+        final_state.vel.vector.x, final_state.vel.vector.y, final_state.vel.vector.z
     );
     println!("  Specific energy: {:.6e} J/kg", e_final.value);
     println!(

@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 ///   the product/quotient of the operands' units (type-level exponent
 ///   arithmetic).
 /// - `Mul`/`Div` by a raw `T` scalar preserves the unit unchanged.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 #[cfg_attr(
