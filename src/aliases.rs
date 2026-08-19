@@ -37,7 +37,6 @@ pub type Inductance<T = f64> = Quantity<T, dim::Inductance>;
 pub type MagneticFlux<T = f64> = Quantity<T, dim::MagneticFlux>;
 pub type MagneticFluxDensity<T = f64> = Quantity<T, dim::MagneticFluxDensity>;
 pub type GravitationalParameter<T = f64> = Quantity<T, dim::GravitationalParameter>;
-/// Gravitational constant G as a typed quantity (m³ kg⁻¹ s⁻²).
 pub type GConstant<T = f64> = Quantity<T, dim::GConstant>;
 pub type MomentOfInertia<T = f64> = Quantity<T, dim::MomentOfInertia>;
 pub type Wavenumber<T = f64> = Quantity<T, dim::Wavenumber>;

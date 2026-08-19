@@ -202,10 +202,14 @@ fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
         + k6_a * ((rkdp54::B5[5] - rkdp54::B4[5]) * dt)
         + k7_a * ((rkdp54::B5[6] - rkdp54::B4[6]) * dt);
 
-    // RMS error norm (dimensionless relative)
-    let err_pos_mag = err_pos.norm().value;
-    let err_vel_mag = err_vel.norm().value;
-    let error = (err_pos_mag * err_pos_mag + err_vel_mag * err_vel_mag).sqrt();
+    // RMS error norm — combines position error (m) and velocity error (m/s).
+    // These have different dimensions, so extract raw values for the scalar
+    // tolerance comparison (standard RKDP54 adaptive control).
+    let error = {
+        let ep = err_pos.norm().value;
+        let ev = err_vel.norm().value;
+        (ep * ep + ev * ev).sqrt()
+    };
 
     (
         OrbitState {
