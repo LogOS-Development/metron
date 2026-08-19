@@ -239,12 +239,12 @@ fn propagate(
             // Increase step if error is small
             if error > 0.0 {
                 let factor = (tolerance / error).powf(0.2).clamp(0.2, 5.0);
-                dt = Seconds::new(dt.value * factor);
+                dt *= factor;
             }
         } else {
             // Reject step, shrink dt
             let factor = (tolerance / error).powf(0.2).max(0.1);
-            dt = Seconds::new(dt.value * factor);
+            dt *= factor;
         }
     }
     state
