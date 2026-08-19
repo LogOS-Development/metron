@@ -4,6 +4,7 @@ use num_complex::Complex;
 
 use super::dim;
 use super::quantity::Quantity;
+use super::vector::VectorQuantity;
 
 // --- Base ---
 pub type Meters<T = f64> = Quantity<T, dim::Meter>;
@@ -42,6 +43,12 @@ pub type MomentOfInertia<T = f64> = Quantity<T, dim::MomentOfInertia>;
 pub type Wavenumber<T = f64> = Quantity<T, dim::Wavenumber>;
 pub type ProbabilityDensity<T = f64> = Quantity<T, dim::ProbabilityDensity>;
 pub type MassFlowRate<T = f64> = Quantity<T, dim::MassFlowRate>;
+
+// --- 3D vector aliases ---
+pub type PositionVector = VectorQuantity<f64, 3, dim::Meter>;
+pub type VelocityVector = VectorQuantity<f64, 3, dim::Velocity>;
+pub type AccelerationVector = VectorQuantity<f64, 3, dim::Acceleration>;
+pub type ForceVector = VectorQuantity<f64, 3, dim::Force>;
 
 // --- Prefixed (same unit tags, different semantic names) ---
 pub type Kilometers<T = f64> = Quantity<T, dim::Meter>;

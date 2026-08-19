@@ -154,5 +154,65 @@ where
 }
 
 // ===========================================================================
-// Sqrt trait removed — not needed for physics. Use pow! and division instead.
+// Halvable — type-level "half" for even signed exponents
 // ===========================================================================
+
+/// Halves a type-level signed integer exponent.
+///
+/// Only implemented for even exponents. Odd exponents have no impl,
+/// so `sqrt(m)` is a compile-time error — `m^{1/2}` has no SI unit.
+pub trait Halvable {
+    type Output;
+}
+
+macro_rules! impl_halvable {
+    ($($p:ident => $ph:ident, $n:ident => $nh:ident),* $(,)?) => {
+        $(
+            impl Halvable for $p { type Output = $ph; }
+            impl Halvable for $n { type Output = $nh; }
+        )*
+    };
+}
+
+impl Halvable for Z0 {
+    type Output = Z0;
+}
+
+impl_halvable! {
+    P2 => P1, N2 => N1,
+    P4 => P2, N4 => N2,
+    P6 => P3, N6 => N3,
+}
+
+// ===========================================================================
+// Sqrt — type-level square root of a unit tuple
+// ===========================================================================
+
+/// Type-level square root of a `Unit` tuple.
+///
+/// Each exponent must be [`Halvable`] (i.e. even). Odd exponents
+/// produce a compile-time error.
+pub trait Sqrt {
+    type Output;
+}
+
+impl<M, Kg, S, A, K, Mol, Cd> Sqrt for Unit<(M, Kg, S, A, K, Mol, Cd)>
+where
+    M: Halvable,
+    Kg: Halvable,
+    S: Halvable,
+    A: Halvable,
+    K: Halvable,
+    Mol: Halvable,
+    Cd: Halvable,
+{
+    type Output = Unit<(
+        <M as Halvable>::Output,
+        <Kg as Halvable>::Output,
+        <S as Halvable>::Output,
+        <A as Halvable>::Output,
+        <K as Halvable>::Output,
+        <Mol as Halvable>::Output,
+        <Cd as Halvable>::Output,
+    )>;
+}

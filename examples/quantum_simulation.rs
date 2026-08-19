@@ -109,8 +109,8 @@ fn initial_wavefunction() -> Wavefunction {
     let mut psi = Vec::with_capacity(N);
     for i in 0..N {
         let x = (i as f64 + 0.5) * dx;
-        let phi1 = 2.0_f64.sqrt() * (std::f64::consts::PI * x).sin();
-        let phi2 = 2.0_f64.sqrt() * (2.0 * std::f64::consts::PI * x).sin();
+        let phi1 = 2.0_f64.sqrt() * (metron::constants::PI.value * x).sin();
+        let phi2 = 2.0_f64.sqrt() * (2.0 * metron::constants::PI.value * x).sin();
         psi.push(Complex::new((phi1 + phi2) / 2.0_f64.sqrt(), 0.0));
     }
     psi
@@ -138,7 +138,7 @@ fn measure_position(psi: &Wavefunction, dx: f64) -> (usize, Wavefunction) {
     for i in 0..N {
         let x = (i as f64 + 0.5) * dx;
         let g = (-(x - x_measured).powi(2) / (2.0 * sigma * sigma)).exp()
-            / (sigma * (2.0 * std::f64::consts::PI).sqrt());
+            / (sigma * (2.0 * metron::constants::PI.value).sqrt());
         collapsed.push(Complex::new(g, 0.0));
         norm_sq += g * g * dx; // multiply by dx for discrete norm
     }
@@ -150,17 +150,18 @@ fn measure_position(psi: &Wavefunction, dx: f64) -> (usize, Wavefunction) {
 }
 
 fn main() {
-    // --- Physical constants (SI) for display ---
-    const HBAR: f64 = 1.054571817e-34; // J·s
-    const M_ELECTRON: f64 = 9.1093837015e-31; // kg
-    const L_SI: f64 = 1e-9; // 1 nm well
+    // SI constants (from metron, converted for natural-unit computation)
+
+    const L_SI: f64 = 1e-9;
 
     // --- Natural units: ℏ = m = L = 1 ---
     // Energy scale: E_natural → E_SI via E_SI = E_natural * ℏ²/(mL²)
     // (the 1/2 is already in the Hamiltonian H = -(1/2)d²/dx²)
-    let e_scale = HBAR * HBAR / (M_ELECTRON * L_SI * L_SI);
+    let e_scale = metron::constants::HBAR.value * metron::constants::HBAR.value
+        / (metron::constants::ELECTRON_MASS.value * L_SI * L_SI);
     // Time scale: t_natural = t_SI * ℏ/(mL²)  →  t_SI = t_natural * mL²/ℏ
-    let t_scale = M_ELECTRON * L_SI * L_SI / HBAR; // s per natural unit
+    let t_scale =
+        metron::constants::ELECTRON_MASS.value * L_SI * L_SI / metron::constants::HBAR.value; // s per natural unit
 
     let dx_natural = 1.0 / N as f64;
     let dx_si = Meters::new(dx_natural * L_SI);
@@ -168,10 +169,13 @@ fn main() {
     println!("=== Quantum Wavefunction Simulation ===");
     println!("Crank-Nicolson propagation of TDSE");
     println!();
-    println!("Particle: electron (m = {:.4e} kg)", M_ELECTRON);
+    println!(
+        "Particle: electron (m = {:.4e} kg)",
+        metron::constants::ELECTRON_MASS.value
+    );
     println!("Well width: {:.4e} m (1 nm quantum dot)", L_SI);
     println!("Grid points: {}", N);
-    println!("dx = {:.4e} m", dx_si.into_value());
+    println!("dx = {:.4e} m", dx_si.value);
     println!();
 
     // Build Hamiltonian
@@ -182,19 +186,22 @@ fn main() {
     let prob0 = total_probability(&psi0, dx_natural);
     let e0_natural = energy_expectation(&psi0, &diag, &offdiag, dx_natural);
     // Analytic: ⟨E⟩ = (E1 + E2)/2 = (π²/2 + 2π²)/2 = 5π²/4
-    let e_analytic_natural = 5.0 * std::f64::consts::PI.powi(2) / 4.0;
+    let e_analytic_natural = 5.0 * metron::constants::PI.value.powi(2) / 4.0;
     let e0_si = Energy::new(e0_natural * e_scale);
 
     // Analytic energies
-    let e1_si = HBAR * HBAR * std::f64::consts::PI.powi(2) / (2.0 * M_ELECTRON * L_SI.powi(2));
+    let e1_si = metron::constants::HBAR.value
+        * metron::constants::HBAR.value
+        * metron::constants::PI.value.powi(2)
+        / (2.0 * metron::constants::ELECTRON_MASS.value * L_SI.powi(2));
     let e2_si = 4.0 * e1_si;
 
     println!("Initial state: (|1⟩ + |2⟩) / √2");
     println!("  |ψ|² integral:  {:.10}", prob0);
     println!(
         "  ⟨E⟩ = {:.6e} J ({:.4} eV)  [natural: {:.6}, analytic: {:.6}]",
-        e0_si.into_value(),
-        e0_si.into_value() / 1.602e-19,
+        e0_si.value,
+        e0_si.value / 1.602e-19,
         e0_natural,
         e_analytic_natural
     );
@@ -210,15 +217,15 @@ fn main() {
 
     // Propagate
     // Ground state period: T₁ = 2π/E₁ (natural units)
-    let e1_natural = std::f64::consts::PI.powi(2) / 2.0; // n=1, ℏ=m=L=1
-    let t1_natural = 2.0 * std::f64::consts::PI / e1_natural;
+    let e1_natural = metron::constants::PI.value.powi(2) / 2.0; // n=1, ℏ=m=L=1
+    let t1_natural = 2.0 * metron::constants::PI.value / e1_natural;
     let dt_natural = t1_natural / 1000.0;
     let dt_si = Seconds::new(dt_natural * t_scale);
     let t1_si = Seconds::new(t1_natural * t_scale);
 
     println!("Propagation:");
-    println!("  dt = {:.4e} s", dt_si.into_value());
-    println!("  T₁ = {:.4e} s (ground state period)", t1_si.into_value());
+    println!("  dt = {:.4e} s", dt_si.value);
+    println!("  T₁ = {:.4e} s (ground state period)", t1_si.value);
     println!();
 
     let mut psi = psi0.clone();
@@ -231,9 +238,7 @@ fn main() {
             let t_si = Seconds::new((step as f64) * dt_natural * t_scale);
             println!(
                 "  t={:>8.4e} s  |ψ|²={:.10}  ⟨E⟩={:.6e} J",
-                t_si.into_value(),
-                prob,
-                e_si.into_value()
+                t_si.value, prob, e_si.value
             );
         }
         if step < n_steps {
@@ -249,7 +254,7 @@ fn main() {
     let x_measured = Meters::new((measured_idx as f64 + 0.5) * dx_natural * L_SI);
 
     println!("Measurement (position):");
-    println!("  Measured x = {:.6e} m", x_measured.into_value());
+    println!("  Measured x = {:.6e} m", x_measured.value);
     println!("  |ψ|² before collapse: {:.10}", prob_before);
     println!("  |ψ|² after collapse:  {:.10}", prob_after);
     println!(
@@ -267,15 +272,15 @@ fn main() {
     let peak_idx = density
         .iter()
         .enumerate()
-        .max_by(|(_, pd_a), (_, pd_b)| pd_a.into_value().partial_cmp(&pd_b.into_value()).unwrap())
+        .max_by(|(_, pd_a), (_, pd_b)| pd_a.value.partial_cmp(&pd_b.value).unwrap())
         .map(|(i, _)| i)
         .unwrap();
 
     println!("Probability density |ψ(x)|² (collapsed state):");
     println!(
         "  Peak at x = {:.6e} m, |ψ|² = {:.6e} 1/m",
-        (peak_idx as f64 + 0.5) * dx_si.into_value(),
-        density[peak_idx].into_value()
+        (peak_idx as f64 + 0.5) * dx_si.value,
+        density[peak_idx].value
     );
     println!();
     println!("All quantities tracked with compile-time SI units.");

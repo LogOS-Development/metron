@@ -21,6 +21,7 @@
 extern crate serde;
 
 pub mod aliases;
+pub mod constants;
 pub mod dim;
 pub mod prefix;
 pub mod quantity;
@@ -35,7 +36,7 @@ pub use aliases::*;
 pub use prefix::SiPrefix;
 pub use quantity::{ConvertPrefix, Quantity};
 pub use tensor::TensorQuantity;
-pub use unit::{PowMap, Unit, UnitPow};
+pub use unit::{Halvable, PowMap, Sqrt, Unit, UnitPow};
 pub use unit_name::UnitName;
 pub use vector::VectorQuantity;
 // `dim` is already a pub mod, no need to re-export

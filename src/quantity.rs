@@ -8,7 +8,7 @@ use num_traits::{Float, NumAssign, Zero};
 
 use super::dim;
 use super::prefix::SiPrefix;
-use super::unit::{PowMap, UnitPow};
+use super::unit::{PowMap, Sqrt, UnitPow};
 use super::unit_name::UnitName;
 
 #[cfg(feature = "serde")]
@@ -94,6 +94,18 @@ impl<T, U> Quantity<T, U> {
             value: f(self.value),
             _u: PhantomData,
         }
+    }
+
+    /// Square root. Only callable when every exponent is even.
+    /// `sqrt(m²) = m`, `sqrt(m²/s²) = m/s`. Odd exponents are a compile error.
+    #[inline]
+    #[must_use]
+    pub fn sqrt(self) -> Quantity<T, <U as Sqrt>::Output>
+    where
+        T: nalgebra::ComplexField,
+        U: Sqrt,
+    {
+        Quantity::new(self.value.sqrt())
     }
 
     /// Raise a quantity to an integer power.
