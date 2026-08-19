@@ -40,6 +40,7 @@ pub type GravitationalParameter<T = f64> = Quantity<T, dim::GravitationalParamet
 pub type GConstant<T = f64> = Quantity<T, dim::GConstant>;
 pub type MomentOfInertia<T = f64> = Quantity<T, dim::MomentOfInertia>;
 pub type Wavenumber<T = f64> = Quantity<T, dim::Wavenumber>;
+pub type ProbabilityDensity<T = f64> = Quantity<T, dim::ProbabilityDensity>;
 pub type MassFlowRate<T = f64> = Quantity<T, dim::MassFlowRate>;
 
 // --- Prefixed (same unit tags, different semantic names) ---

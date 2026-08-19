@@ -29,17 +29,6 @@ let force: Force<f64> = 10.0 * (kg * m / pow!(s, 2));     // N
 let energy: Energy<f64> = 4.2 * (kg * pow!(m, 2) / pow!(s, 2));  // J
 ```
 
-## What it does
-
-Unit mismatches are compile errors, not runtime panics:
-
-```rust
-// This does NOT compile:
-let wrong: Force<f64> = mass * velocity;  // error: kg*(m/s) ≠ kg*m/s²
-```
-
-`Quantity<T, U>` is a newtype around `f64` with `PhantomData<U>` — zero runtime cost. The unit type `U` is a 7-tuple of type-level signed integer exponents over `[m, kg, s, A, K, mol, cd]`, tracked at compile time via `typenum`.
-
 ## Features
 
 - **Compile-time checking** — wrong unit combinations are type errors

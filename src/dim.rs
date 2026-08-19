@@ -54,3 +54,4 @@ pub type AngularAcceleration = Unit<(Z0, Z0, N2, Z0, Z0, Z0, Z0)>;
 pub type MassFlowRate = Unit<(Z0, P1, N1, Z0, Z0, Z0, Z0)>;
 pub type SpecificImpulse = Second;
 pub type Wavenumber = Unit<(N1, Z0, Z0, Z0, Z0, Z0, Z0)>;
+pub type ProbabilityDensity = Wavenumber;
