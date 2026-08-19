@@ -166,7 +166,7 @@ fn main() {
     let dx_si = Meters::new(dx_natural * L_SI);
 
     println!("=== Quantum Wavefunction Simulation ===");
-    println!("Crank-Nicolson propagation of TDSE (natural units internally)");
+    println!("Crank-Nicolson propagation of TDSE");
     println!();
     println!("Particle: electron (m = {:.4e} kg)", M_ELECTRON);
     println!("Well width: {:.4e} m (1 nm quantum dot)", L_SI);
