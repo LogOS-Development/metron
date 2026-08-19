@@ -96,19 +96,6 @@ impl<T, U> Quantity<T, U> {
         }
     }
 
-    /// Returns the SI symbol for this quantity's unit (e.g. "m/s", "N", "Hz").
-    ///
-    /// Requires `U: UnitName`. Returns `None` if the unit has no registered
-    /// `UnitName` impl (i.e. it's a computed unit that doesn't match a named alias).
-    #[inline]
-    #[must_use]
-    pub fn unit_name(&self) -> Option<&'static str>
-    where
-        U: UnitName,
-    {
-        Some(U::NAME)
-    }
-
     /// Raise a quantity to an integer power.
     ///
     /// Call with `s.pow::<2>()` for s², `m.pow::<3>()` for m³, `s.pow::<-1>()` for s⁻¹.
@@ -256,7 +243,31 @@ where
 
 impl<T: fmt::Display, U: UnitName> fmt::Display for Quantity<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.value, U::NAME)
+        fmt::Display::fmt(&self.value, f)?;
+        if !U::NAME.is_empty() {
+            write!(f, " {name}", name = U::NAME)?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: fmt::LowerExp, U: UnitName> fmt::LowerExp for Quantity<T, U> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerExp::fmt(&self.value, f)?;
+        if !U::NAME.is_empty() {
+            write!(f, " {name}", name = U::NAME)?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: fmt::UpperExp, U: UnitName> fmt::UpperExp for Quantity<T, U> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperExp::fmt(&self.value, f)?;
+        if !U::NAME.is_empty() {
+            write!(f, " {name}", name = U::NAME)?;
+        }
+        Ok(())
     }
 }
 

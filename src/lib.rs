@@ -53,5 +53,17 @@ macro_rules! pow {
     };
 }
 
+/// Assert that a quantity has a specific unit type at compile time.
+///
+/// `assert_unit!(vel, Velocity)` expands to a type check — if `vel` is not
+/// a `Quantity<_, Velocity>`, it's a compile error. This complements
+/// `format!("{vel}")` which checks the runtime value + unit symbol.
+#[macro_export]
+macro_rules! assert_unit {
+    ($q:expr, $unit:ty) => {
+        let _: &$unit = &$q;
+    };
+}
+
 #[cfg(test)]
 mod tests;
