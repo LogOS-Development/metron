@@ -66,6 +66,16 @@ impl<T, const M: usize, const N: usize, U> TensorQuantity<T, M, N, U> {
     pub fn into_matrix(self) -> SMatrix<T, M, N> {
         self.matrix
     }
+
+    /// Returns the SI symbol for this tensor's unit (e.g. "kg·m²", "Pa").
+    #[inline]
+    #[must_use]
+    pub fn unit_name(&self) -> Option<&'static str>
+    where
+        U: UnitName,
+    {
+        Some(U::NAME)
+    }
 }
 
 impl<

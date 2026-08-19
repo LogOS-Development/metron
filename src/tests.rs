@@ -31,20 +31,27 @@ mod tests {
 
     #[test]
     fn scalar_add_sub() {
-        assert_relative_eq!((Meters::new(3.0) + Meters::new(7.0)).value, 10.0);
-        assert_relative_eq!((Meters::new(7.0) - Meters::new(3.0)).value, 4.0);
+        let sum = Meters::new(3.0) + Meters::new(7.0);
+        assert_relative_eq!(sum.value, 10.0);
+        assert_eq!(sum.unit_name(), Some("m"));
+
+        let diff = Meters::new(7.0) - Meters::new(3.0);
+        assert_relative_eq!(diff.value, 4.0);
+        assert_eq!(diff.unit_name(), Some("m"));
     }
 
     #[test]
     fn scalar_mul_div_derives_units() {
         let vel: Velocity = Meters::new(10.0) / Seconds::new(2.0);
         assert_relative_eq!(vel.value, 5.0);
-        assert_eq!(dim::Velocity::NAME, "m/s");
+        assert_eq!(vel.unit_name(), Some("m/s"));
     }
 
     #[test]
     fn scalar_times_raw() {
-        assert_relative_eq!((Meters::new(3.0) * 2.0).value, 6.0);
+        let scaled = Meters::new(3.0) * 2.0;
+        assert_relative_eq!(scaled.value, 6.0);
+        assert_eq!(scaled.unit_name(), Some("m"));
     }
 
     #[test]
@@ -52,6 +59,7 @@ mod tests {
         let vel: Velocity = Meters::new(10.0) / Seconds::new(2.0);
         let acc: Acceleration = vel / Seconds::new(5.0);
         assert_relative_eq!(acc.value, 1.0);
+        assert_eq!(acc.unit_name(), Some("m/s²"));
     }
 
     #[test]
@@ -60,7 +68,7 @@ mod tests {
         let acc: Acceleration = Meters::new(10.0) / (Seconds::new(1.0) * Seconds::new(1.0));
         let f: Force = mass * acc;
         assert_relative_eq!(f.value, 20.0);
-        assert_eq!(dim::Force::NAME, "N");
+        assert_eq!(f.unit_name(), Some("N"));
     }
 
     #[test]
@@ -216,7 +224,7 @@ mod tests {
     fn gm_type() {
         let mu: GravitationalParameter = Quantity::new(3.986004415e14);
         assert_relative_eq!(mu.value, 3.986004415e14);
-        assert_eq!(dim::GravitationalParameter::NAME, "m³/s²");
+        assert_eq!(mu.unit_name(), Some("m³/s²"));
     }
 
     // --- Vector tests ---
@@ -481,60 +489,70 @@ mod tests {
     fn si_velocity_from_m_div_s() {
         let vel: Velocity = 5.0 * (m / s);
         assert_relative_eq!(vel.value, 5.0);
+        assert_eq!(vel.unit_name(), Some("m/s"));
     }
 
     #[test]
     fn si_acceleration() {
         let acc: Acceleration = 9.8 * (m / pow!(s, 2));
         assert_relative_eq!(acc.value, 9.8);
+        assert_eq!(acc.unit_name(), Some("m/s²"));
     }
 
     #[test]
     fn si_area() {
         let area: Area = 3.0 * pow!(m, 2);
         assert_relative_eq!(area.value, 3.0);
+        assert_eq!(area.unit_name(), Some("m²"));
     }
 
     #[test]
     fn si_frequency_from_inverse_s() {
         let freq: Frequency = 1.0 / s;
         assert_relative_eq!(freq.value, 1.0);
+        assert_eq!(freq.unit_name(), Some("Hz"));
     }
 
     #[test]
     fn si_force() {
         let f: Force = 10.0 * (kg * m / pow!(s, 2));
         assert_relative_eq!(f.value, 10.0);
+        assert_eq!(f.unit_name(), Some("N"));
     }
 
     #[test]
     fn si_pressure() {
         let p: Pressure = 101_325.0 * (kg / (m * pow!(s, 2)));
         assert_relative_eq!(p.value, 101_325.0);
+        assert_eq!(p.unit_name(), Some("Pa"));
     }
 
     #[test]
     fn si_energy() {
         let e: Energy = 4.2 * (kg * pow!(m, 2) / pow!(s, 2));
         assert_relative_eq!(e.value, 4.2);
+        assert_eq!(e.unit_name(), Some("J"));
     }
 
     #[test]
     fn si_power() {
         let p: Power = 100.0 * (kg * pow!(m, 2) / pow!(s, 3));
         assert_relative_eq!(p.value, 100.0);
+        assert_eq!(p.unit_name(), Some("W"));
     }
 
     #[test]
     fn si_volume() {
         let vol: Volume = 2.0 * pow!(m, 3);
         assert_relative_eq!(vol.value, 2.0);
+        assert_eq!(vol.unit_name(), Some("m³"));
     }
 
     #[test]
     fn si_inverse_meter_wavenumber() {
         let wn: Wavenumber = 1.0 / m;
         assert_relative_eq!(wn.value, 1.0);
+        assert_eq!(wn.unit_name(), Some("1/m"));
     }
 
     #[test]

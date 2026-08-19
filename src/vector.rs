@@ -94,6 +94,16 @@ impl<T, const N: usize, U> VectorQuantity<T, N, U> {
     pub fn into_vector(self) -> SVector<T, N> {
         self.vector
     }
+
+    /// Returns the SI symbol for this vector's unit (e.g. "m/s", "N", "T").
+    #[inline]
+    #[must_use]
+    pub fn unit_name(&self) -> Option<&'static str>
+    where
+        U: UnitName,
+    {
+        Some(U::NAME)
+    }
 }
 
 impl<T: NumAssign + Clone + nalgebra::Scalar + nalgebra::ComplexField, const N: usize, U>
