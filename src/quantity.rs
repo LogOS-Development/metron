@@ -96,6 +96,20 @@ impl<T, U> Quantity<T, U> {
         }
     }
 
+    /// Absolute value. Preserves the unit tag.
+    #[inline]
+    #[must_use]
+    pub fn abs(self) -> Self
+    where
+        T: core::ops::Neg<Output = T> + PartialOrd + num_traits::Zero,
+    {
+        if self.value < T::zero() {
+            Quantity::new(-self.value)
+        } else {
+            self
+        }
+    }
+
     /// Square root. Only callable when every exponent is even.
     /// `sqrt(m²) = m`, `sqrt(m²/s²) = m/s`. Odd exponents are a compile error.
     #[inline]

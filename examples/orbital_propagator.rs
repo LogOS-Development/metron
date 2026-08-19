@@ -287,13 +287,13 @@ fn main() {
     let period_secs: Seconds = TAU * (r_cubed / gm).sqrt();
 
     println!("=== Orbital Propagator (Dormand-Prince 5(4)) ===");
-    println!("Initial altitude:  {:.0} m", alt.value);
-    println!("Initial radius:    {:.0} m", r0.value);
-    println!("Circular velocity: {:.1} m/s", v_circ.value);
+    println!("Initial altitude:  {:.0}", alt);
+    println!("Initial radius:    {:.0}", r0);
+    println!("Circular velocity: {:.1}", v_circ);
     println!(
-        "Orbital period:    {:.1} s ({:.1} min)",
-        period_secs.value,
-        period_secs.value / 60.0
+        "Orbital period:    {:.1} ({:.1} min)",
+        period_secs,
+        period_secs / Seconds::new(60.0)
     );
     println!();
 
@@ -304,11 +304,11 @@ fn main() {
     // Check energy conservation
     let e_initial: SpecificEnergy = specific_energy(initial_state.pos, initial_state.vel);
     let e_final: SpecificEnergy = specific_energy(final_state.pos, final_state.vel);
-    let energy_drift: f64 = (e_final - e_initial).value.abs();
+    let energy_drift: SpecificEnergy = (e_final - e_initial).abs();
 
     // Check position closure (should return to start after one period)
     let pos_delta: PositionVector = final_state.pos - initial_state.pos;
-    let pos_error: f64 = pos_delta.norm().value;
+    let pos_error: Meters = pos_delta.norm();
 
     println!("After 1 orbit:");
     println!(
@@ -319,13 +319,13 @@ fn main() {
         "  Velocity: ({:.1}, {:.1}, {:.1}) m/s",
         final_state.vel.vector.x, final_state.vel.vector.y, final_state.vel.vector.z
     );
-    println!("  Specific energy: {:.6e} J/kg", e_final.value);
+    println!("  Specific energy: {:.6e}", e_final);
     println!(
-        "  Energy drift:    {:.6e} J/kg ({:.2e} relative)",
+        "  Energy drift:    {:.6e} ({:.2e} relative)",
         energy_drift,
-        energy_drift / e_initial.value.abs()
+        energy_drift / e_initial.abs()
     );
-    println!("  Position error:  {:.3} m (closure)", pos_error);
+    println!("  Position error:  {:.3} (closure)", pos_error);
     println!();
     println!("All quantities tracked with compile-time SI units.");
     println!("Zero unit errors — the compiler verified every operation.");

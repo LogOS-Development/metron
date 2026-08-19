@@ -101,3 +101,11 @@ impl UnitName for dim::MassFlowRate {
 impl UnitName for dim::Wavenumber {
     const NAME: &'static str = "1/m";
 }
+impl UnitName for dim::SpecificEnergy {
+    const NAME: &'static str = "J/kg";
+}
+impl UnitName for dim::SpringConstant {
+    const NAME: &'static str = "N/m";
+}
+// DampingCoefficient = MassFlowRate (same dimensions: kg/s = N·s/m)
+// — already has UnitName impl via MassFlowRate
