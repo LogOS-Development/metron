@@ -39,6 +39,9 @@ pub type MagneticFluxDensity<T = f64> = Quantity<T, dim::MagneticFluxDensity>;
 pub type GravitationalParameter<T = f64> = Quantity<T, dim::GravitationalParameter>;
 pub type GConstant<T = f64> = Quantity<T, dim::GConstant>;
 pub type MomentOfInertia<T = f64> = Quantity<T, dim::MomentOfInertia>;
+pub type SpecificEnergy<T = f64> = Quantity<T, dim::SpecificEnergy>;
+pub type SpringConstant<T = f64> = Quantity<T, dim::SpringConstant>;
+pub type DampingCoefficient<T = f64> = Quantity<T, dim::DampingCoefficient>;
 pub type Wavenumber<T = f64> = Quantity<T, dim::Wavenumber>;
 pub type ProbabilityDensity<T = f64> = Quantity<T, dim::ProbabilityDensity>;
 pub type MassFlowRate<T = f64> = Quantity<T, dim::MassFlowRate>;
@@ -48,6 +51,7 @@ pub type PositionVector = VectorQuantity<f64, 3, dim::Meter>;
 pub type VelocityVector = VectorQuantity<f64, 3, dim::Velocity>;
 pub type AccelerationVector = VectorQuantity<f64, 3, dim::Acceleration>;
 pub type ForceVector = VectorQuantity<f64, 3, dim::Force>;
+pub type DimensionlessVector = VectorQuantity<f64, 3, dim::Dimensionless>;
 
 // --- Prefixed (same unit tags, different semantic names) ---
 pub type Kilometers<T = f64> = Quantity<T, dim::Meter>;

@@ -163,8 +163,8 @@ fn main() {
     let t_scale =
         metron::constants::ELECTRON_MASS.value * L_SI * L_SI / metron::constants::HBAR.value; // s per natural unit
 
-    let dx_natural = 1.0 / N as f64;
-    let dx_si = Meters::new(dx_natural * L_SI);
+    let dx_natural: f64 = 1.0 / N as f64;
+    let dx_si: Meters = Meters::new(dx_natural * L_SI);
 
     println!("=== Quantum Wavefunction Simulation ===");
     println!("Crank-Nicolson propagation of TDSE");
@@ -187,10 +187,10 @@ fn main() {
     let e0_natural = energy_expectation(&psi0, &diag, &offdiag, dx_natural);
     // Analytic: ⟨E⟩ = (E1 + E2)/2 = (π²/2 + 2π²)/2 = 5π²/4
     let e_analytic_natural = 5.0 * metron::constants::PI.value.powi(2) / 4.0;
-    let e0_si = Energy::new(e0_natural * e_scale);
+    let e0_si: Energy = Energy::new(e0_natural * e_scale);
 
     // Analytic energies
-    let e1_si = metron::constants::HBAR.value
+    let e1_si: f64 = metron::constants::HBAR.value
         * metron::constants::HBAR.value
         * metron::constants::PI.value.powi(2)
         / (2.0 * metron::constants::ELECTRON_MASS.value * L_SI.powi(2));
@@ -220,8 +220,8 @@ fn main() {
     let e1_natural = metron::constants::PI.value.powi(2) / 2.0; // n=1, ℏ=m=L=1
     let t1_natural = 2.0 * metron::constants::PI.value / e1_natural;
     let dt_natural = t1_natural / 1000.0;
-    let dt_si = Seconds::new(dt_natural * t_scale);
-    let t1_si = Seconds::new(t1_natural * t_scale);
+    let dt_si: Seconds = Seconds::new(dt_natural * t_scale);
+    let t1_si: Seconds = Seconds::new(t1_natural * t_scale);
 
     println!("Propagation:");
     println!("  dt = {:.4e} s", dt_si.value);
@@ -251,7 +251,7 @@ fn main() {
     let (measured_idx, psi_collapsed) = measure_position(&psi, dx_natural);
     let prob_before = total_probability(&psi, dx_natural);
     let prob_after = total_probability(&psi_collapsed, dx_natural);
-    let x_measured = Meters::new((measured_idx as f64 + 0.5) * dx_natural * L_SI);
+    let x_measured: Meters = Meters::new((measured_idx as f64 + 0.5) * dx_natural * L_SI);
 
     println!("Measurement (position):");
     println!("  Measured x = {:.6e} m", x_measured.value);

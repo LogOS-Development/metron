@@ -7,13 +7,11 @@
 //! Run: cargo run --example orbital_propagator
 
 use metron::constants::{GM_EARTH, R_EARTH_EQ, TAU};
-use metron::dim;
 use metron::pow;
 use metron::{
-    Acceleration, AccelerationVector, GravitationalParameter, Meters, PositionVector, Quantity,
-    Seconds, VelocityVector,
+    Acceleration, AccelerationVector, Area, DimensionlessVector, GravitationalParameter, Meters,
+    PositionVector, Seconds, SpecificEnergy, Velocity, VelocityVector, Volume,
 };
-use std::ops::Mul;
 
 /// Physical state: position and velocity as typed vectors.
 #[derive(Clone, Copy, Debug)]
@@ -81,7 +79,7 @@ mod rkdp54 {
 ///
 /// Fully typed: gm / r² → (m³/s²) / m² = m/s² = Acceleration.
 fn gravity_accel_magnitude(r: Meters, gm: GravitationalParameter) -> Acceleration {
-    let r_sq = pow!(r, 2);
+    let r_sq: Area = pow!(r, 2);
     gm / r_sq
 }
 
@@ -90,16 +88,16 @@ fn gravity_accel_magnitude(r: Meters, gm: GravitationalParameter) -> Acceleratio
 /// Takes typed position, returns typed acceleration.
 /// a = -GM/|r|² * r̂
 fn gravity_accel(pos: PositionVector, gm: GravitationalParameter) -> AccelerationVector {
-    let r_mag = pos.norm();
-    let accel = gravity_accel_magnitude(r_mag, gm);
-    let r_hat = pos / r_mag;
+    let r_mag: Meters = pos.norm();
+    let accel: Acceleration = gravity_accel_magnitude(r_mag, gm);
+    let r_hat: DimensionlessVector = pos / r_mag;
     r_hat * (-accel)
 }
 
 /// Derivative of orbital state: velocity and acceleration.
 fn derivative(state: &OrbitState) -> (VelocityVector, AccelerationVector) {
-    let gm = GM_EARTH;
-    let acc = gravity_accel(state.pos, gm);
+    let gm: GravitationalParameter = GM_EARTH;
+    let acc: AccelerationVector = gravity_accel(state.pos, gm);
     (state.vel, acc)
 }
 
@@ -107,7 +105,7 @@ fn derivative(state: &OrbitState) -> (VelocityVector, AccelerationVector) {
 ///
 /// Returns the new state and the error estimate (dimensionless relative).
 fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
-    let (k1_v, k1_a) = derivative(state);
+    let (k1_v, k1_a): (VelocityVector, AccelerationVector) = derivative(state);
 
     // k_v * dt → PositionVector, k_a * dt → VelocityVector
     let s2 = OrbitState {
@@ -165,14 +163,14 @@ fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
     let (k6_v, k6_a) = derivative(&s6);
 
     // 5th-order solution
-    let new_pos = state.pos
+    let new_pos: PositionVector = state.pos
         + k1_v * (rkdp54::B5[0] * dt)
         + k3_v * (rkdp54::B5[2] * dt)
         + k4_v * (rkdp54::B5[3] * dt)
         + k5_v * (rkdp54::B5[4] * dt)
         + k6_v * (rkdp54::B5[5] * dt);
 
-    let new_vel = state.vel
+    let new_vel: VelocityVector = state.vel
         + k1_a * (rkdp54::B5[0] * dt)
         + k3_a * (rkdp54::B5[2] * dt)
         + k4_a * (rkdp54::B5[3] * dt)
@@ -188,14 +186,14 @@ fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
 
     // Error estimate = |5th-order - 4th-order|
     // (b5-b4) is dimensionless, * dt gives position/velocity units
-    let err_pos = k1_v * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
+    let err_pos: PositionVector = k1_v * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
         + k3_v * ((rkdp54::B5[2] - rkdp54::B4[2]) * dt)
         + k4_v * ((rkdp54::B5[3] - rkdp54::B4[3]) * dt)
         + k5_v * ((rkdp54::B5[4] - rkdp54::B4[4]) * dt)
         + k6_v * ((rkdp54::B5[5] - rkdp54::B4[5]) * dt)
         + k7_v * ((rkdp54::B5[6] - rkdp54::B4[6]) * dt);
 
-    let err_vel = k1_a * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
+    let err_vel: VelocityVector = k1_a * ((rkdp54::B5[0] - rkdp54::B4[0]) * dt)
         + k3_a * ((rkdp54::B5[2] - rkdp54::B4[2]) * dt)
         + k4_a * ((rkdp54::B5[3] - rkdp54::B4[3]) * dt)
         + k5_a * ((rkdp54::B5[4] - rkdp54::B4[4]) * dt)
@@ -206,8 +204,8 @@ fn rkdp54_step(state: &OrbitState, dt: Seconds) -> (OrbitState, f64) {
     // These have different dimensions, so extract raw values for the scalar
     // tolerance comparison (standard RKDP54 adaptive control).
     let error = {
-        let ep = err_pos.norm().value;
-        let ev = err_vel.norm().value;
+        let ep: f64 = err_pos.norm().value;
+        let ev: f64 = err_vel.norm().value;
         (ep * ep + ev * ev).sqrt()
     };
 
@@ -227,7 +225,7 @@ fn propagate(
     mut dt: Seconds,
     tolerance: f64,
 ) -> OrbitState {
-    let mut t = Seconds::new(0.0);
+    let mut t: Seconds = Seconds::new(0.0);
 
     while t < t_total {
         if t + dt > t_total {
@@ -258,27 +256,25 @@ fn propagate(
 ///
 /// All arithmetic is compile-time unit checked. v² has units (m/s)² = m²/s²,
 /// GM/r has units m³/s² / m = m²/s² — both are specific energy (J/kg).
-type SpecificEnergy = Quantity<f64, <dim::Velocity as Mul<dim::Velocity>>::Output>;
-
 fn specific_energy(pos: PositionVector, vel: VelocityVector) -> SpecificEnergy {
-    let gm = GM_EARTH;
-    let r = pos.norm();
-    let v = vel.norm();
-    let v_sq = pow!(v, 2);
-    let ke = v_sq.map(|x| x * 0.5);
-    let pe = gm / r;
+    let gm: GravitationalParameter = GM_EARTH;
+    let r: Meters = pos.norm();
+    let v: Velocity = vel.norm();
+    let v_sq: SpecificEnergy = pow!(v, 2);
+    let ke: SpecificEnergy = v_sq.map(|x| x * 0.5);
+    let pe: SpecificEnergy = gm / r;
     ke - pe
 }
 
 fn main() {
     // ISS-like orbit: 400 km altitude, circular, prograde
-    let alt = Meters::new(400_000.0);
-    let earth_r = R_EARTH_EQ;
-    let r0 = earth_r + alt;
-    let gm = GM_EARTH;
+    let alt: Meters = Meters::new(400_000.0);
+    let earth_r: Meters = R_EARTH_EQ;
+    let r0: Meters = earth_r + alt;
+    let gm: GravitationalParameter = GM_EARTH;
 
     // v = sqrt(GM/r)  →  sqrt(m²/s²) = m/s
-    let v_circ = (gm / r0).sqrt();
+    let v_circ: Velocity = (gm / r0).sqrt();
 
     // Position and velocity as typed vectors
     let initial_state = OrbitState {
@@ -287,8 +283,8 @@ fn main() {
     };
 
     // Orbital period: T = 2π * sqrt(r³/GM)
-    let r_cubed = pow!(r0, 3);
-    let period_secs = TAU * (r_cubed / gm).sqrt();
+    let r_cubed: Volume = pow!(r0, 3);
+    let period_secs: Seconds = TAU * (r_cubed / gm).sqrt();
 
     println!("=== Orbital Propagator (Dormand-Prince 5(4)) ===");
     println!("Initial altitude:  {:.0} m", alt.value);
@@ -302,17 +298,17 @@ fn main() {
     println!();
 
     // Propagate one full orbit
-    let dt_init = Seconds::new(10.0); // start with 10s steps
+    let dt_init: Seconds = Seconds::new(10.0); // start with 10s steps
     let final_state = propagate(initial_state, period_secs, dt_init, 1e-10);
 
     // Check energy conservation
-    let e_initial = specific_energy(initial_state.pos, initial_state.vel);
-    let e_final = specific_energy(final_state.pos, final_state.vel);
-    let energy_drift = (e_final - e_initial).value.abs();
+    let e_initial: SpecificEnergy = specific_energy(initial_state.pos, initial_state.vel);
+    let e_final: SpecificEnergy = specific_energy(final_state.pos, final_state.vel);
+    let energy_drift: f64 = (e_final - e_initial).value.abs();
 
     // Check position closure (should return to start after one period)
-    let pos_delta = final_state.pos - initial_state.pos;
-    let pos_error = pos_delta.norm().value;
+    let pos_delta: PositionVector = final_state.pos - initial_state.pos;
+    let pos_error: f64 = pos_delta.norm().value;
 
     println!("After 1 orbit:");
     println!(
