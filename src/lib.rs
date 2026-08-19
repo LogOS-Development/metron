@@ -66,5 +66,5 @@ macro_rules! assert_unit {
     };
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests;
